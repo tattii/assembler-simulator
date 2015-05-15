@@ -63,6 +63,7 @@ app.service('cpu', ['memory', function(memory) {
             self.carry = false;
             self.fault = false;
             self.v = false;
+			self.output = 0;
         }
     };
 
