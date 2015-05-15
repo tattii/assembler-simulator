@@ -21,7 +21,7 @@
                 <button type="button" class="btn btn-default navbar-btn" ng-click="reset()">Reset</button>
             </div>
             <div class="navbar-header navbar-right">
-                <a class="navbar-brand" style="color:#FFFFFF">Simple 8-bit Assembler Simulator</a>
+                <a class="navbar-brand" style="color:#FFFFFF">SIMPLE 16-bit Assembler Simulator</a>
             </div>
         </div>
     </nav>
@@ -51,33 +51,42 @@
             <div class="col-lg-5 col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4 class="panel-title">Output</h4>
-                    </div>
-                    <div class="panel-body source-code">
-                        <div style="float:left;" class="output"
-                             ng-repeat="m in memory.data | startFrom: outputStartIndex track by $index">
-                            <span>{{ getChar(m) }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
                         <h4 class="panel-title">CPU & Memory</h4>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted">Registers / Flags</p>
                         <table class="table table-condensed table-striped">
                             <thead>
                                 <tr>
-                                    <th style="text-align:center">A</th>
-                                    <th style="text-align:center">B</th>
-                                    <th style="text-align:center">C</th>
-                                    <th style="text-align:center">D</th>
-                                    <th style="text-align:center">IP</th>
-                                    <th style="text-align:center">SP</th>
+                                    <th style="text-align:center">PC</th>
+                                    <th style="text-align:center">S</th>
                                     <th style="text-align:center">Z</th>
-                                    <th style="text-align:center">C</th>
-                                    <th style="text-align:center">F</th>
+                                    <th style="text-align:center">V</th>
+                                    <th style="text-align:center">OUTPUT</th>
+                                    <th style="text-align:center">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="text-align:center;" class="source-code">
+                                    <td><div style="margin:auto;" class="marker marker-ip"><small>{{ cpu.pc | number:displayHex }}</small></div></td>
+                                    <td><small>{{ cpu.sign }}</small></td>
+                                    <td><small>{{ cpu.zero}}</small></td>
+                                    <td><small>{{ cpu.v }}</small></td>
+                                    <td><small>{{ cpu.output | number:displayHex }}</small></td>
+                                    <td><small>{{ cpu.count }}</small></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <table class="table table-condensed table-striped">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:center">R0</th>
+                                    <th style="text-align:center">R1</th>
+                                    <th style="text-align:center">R2</th>
+                                    <th style="text-align:center">R3</th>
+                                    <th style="text-align:center">R4</th>
+									<th style="text-align:center">R5</th>
+                                    <th style="text-align:center">R6</th>
+                                    <th style="text-align:center">R7</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -86,15 +95,14 @@
                                     <td><div style="margin:auto;" ng-class="displayB && 'marker marker-b'"><small>{{ cpu.gpr[1] | number:displayHex }}</small></div></td>
                                     <td><div style="margin:auto;" ng-class="displayC && 'marker marker-c'"><small>{{ cpu.gpr[2] | number:displayHex }}</small></div></td>
                                     <td><div style="margin:auto;" ng-class="displayD && 'marker marker-d'"><small>{{ cpu.gpr[3] | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" class="marker marker-ip"><small>{{ cpu.ip | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" class="marker marker-sp"><small>{{ cpu.sp | number:displayHex }}</small></div></td>
-                                    <td><small>{{ cpu.zero | flag }}</small></td>
-                                    <td><small>{{ cpu.carry | flag }}</small></td>
-                                    <td><small>{{ cpu.fault | flag }}</small></td>
+                                    <td><div style="margin:auto;" ng-class="displayE && 'marker marker-e'"><small>{{ cpu.gpr[4] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayF && 'marker marker-f'"><small>{{ cpu.gpr[5] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayG && 'marker marker-g'"><small>{{ cpu.gpr[6] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayH && 'marker marker-h'"><small>{{ cpu.gpr[7] | number:displayHex }}</small></div></td>
                                 </tr>
                             </tbody>
                         </table>
-                        <p class="text-muted">RAM</p>
+						<p class="text-muted">RAM</p>
                         <div style="width:29em;" class="source-code">
                             <div class="memory-block"
                                  ng-repeat="m in memory.data track by $index"
@@ -111,7 +119,7 @@
                             <small>
                                 <span>Clock speed:</span>
                                 <select ng-model="speed" ng-options="item.speed as item.desc for item in speeds"></select>
-                                <span style="margin-left:5px;">Instructions:</span>
+                                <span style="margin-left:5px;">PC:</span>
                                 <a ng-click="displayInstr = true" ng-hide="displayInstr">Show</a>
                                 <a ng-click="displayInstr = false" ng-show="displayInstr">Hide</a>
                                 <span style="margin-left:5px;">View:</span>
@@ -119,43 +127,20 @@
                                 <a ng-click="displayHex = false" ng-show="displayHex">Decimal</a>
 								<br>
 								Register addressing: 
-                                <span style="margin-left:5px;">A:</span>
+                                <span style="margin-left:5px;">R0:</span>
                                 <a ng-click="displayA = true" ng-hide="displayA">Show</a>
                                 <a ng-click="displayA = false" ng-show="displayA">Hide</a>
-                                <span style="margin-left:5px;">B:</span>
+                                <span style="margin-left:5px;">R1:</span>
                                 <a ng-click="displayB = true" ng-hide="displayB">Show</a>
                                 <a ng-click="displayB = false" ng-show="displayB">Hide</a>
-                                <span style="margin-left:5px;">C:</span>
+                                <span style="margin-left:5px;">R2:</span>
                                 <a ng-click="displayC = true" ng-hide="displayC">Show</a>
                                 <a ng-click="displayC = false" ng-show="displayC">Hide</a>
-                                <span style="margin-left:5px;">D:</span>
+								<span style="margin-left:5px;">R3:</span>
                                 <a ng-click="displayD = true" ng-hide="displayD">Show</a>
                                 <a ng-click="displayD = false" ng-show="displayD">Hide</a>
                             </small>
                         </p>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">Labels</h4>
-                    </div>
-                    <div class="panel-body source-code">
-                        <table class="table table-condensed table-striped codelabels">
-                            <tr>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr ng-repeat="(name, value) in labels" class="codelabel">
-                                <td class="codelabel-name">{{ name }}</td>
-                                <td class="codelabel-line"><a ng-click="jumpToLine(value)">{{ value | number:displayHex }}</a></td>
-                                <td class="codelabel-value">{{ memory.data[value] | number:displayHex }}
-                                    <span ng-if="memory.data[value] >= 32 && memory.data[value] <= 126">
-                                        ('{{ getChar(memory.data[value]) }}')
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
                     </div>
                 </div>
             </div>

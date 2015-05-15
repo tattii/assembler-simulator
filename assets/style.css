@@ -27,13 +27,13 @@
 }
 
 .memory-block {
-    width: 1.8em;
+    width: 3.6em;
     display: inline-block;
     text-align: center;
 }
 
 .marker {
-    width: 1.8em;
+    width: 3.6em;
     color: #FFF;
     border-radius: 2px;
 }
