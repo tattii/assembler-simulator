@@ -12,6 +12,16 @@ app.service('memory', [function () {
             self.lastAccess = address;
             return self.data[address];
         },
+        loadInstr: function (address) {
+            var self = this;
+
+            if (address < 0 || address >= self.data.length) {
+                throw "Memory access violation at " + address;
+            }
+
+            self.lastAccess = address;
+            return self.instrs[address];
+        },
         store: function (address, value) {
             var self = this;
 
@@ -28,6 +38,7 @@ app.service('memory', [function () {
             self.lastAccess = -1;
             for (var i = 0, l = self.data.length; i < l; i++) {
                 self.data[i] = 0;
+                if(self.instrs) self.instrs = null;
             }
         }
     };

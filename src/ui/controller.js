@@ -14,9 +14,9 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
                      {speed: 8, desc: "8 HZ"},
                      {speed: 16, desc: "16 HZ"}];
     $scope.speed = 4;
-    $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n; Writes Hello World to the output\n\n	JMP start\nhello: DB \"Hello World!\" ; Variable\n       DB 0	; String terminator\n\nstart:\n	MOV C, hello    ; Point to var \n	MOV D, 232	; Point to output\n	CALL print\n        HLT             ; Stop execution\n\nprint:			; print(C:*from, D:*to)\n	PUSH A\n	PUSH B\n	MOV B, 0\n.loop:\n	MOV A, [C]	; Get char from var\n	MOV [D], A	; Write to output\n	INC C\n	INC D  \n	CMP B, [C]	; Check if end\n	JNZ .loop	; jump if not\n\n	POP B\n	POP A\n	RET";
+	$scope.code = "LI R4,1\nMOV R1,R4\nHLT";
+    //$scope.code = "; Simple example\n; Writes Hello World to the output\n\n	JMP start\nhello: DB \"Hello World!\" ; Variable\n       DB 0	; String terminator\n\nstart:\n	MOV C, hello    ; Point to var \n	MOV D, 232	; Point to output\n	CALL print\n        HLT             ; Stop execution\n\nprint:			; print(C:*from, D:*to)\n	PUSH A\n	PUSH B\n	MOV B, 0\n.loop:\n	MOV A, [C]	; Get char from var\n	MOV [D], A	; Write to output\n	INC C\n	INC D  \n	CMP B, [C]	; Check if end\n	JNZ .loop	; jump if not\n\n	POP B\n	POP A\n	RET";
 
     $scope.reset = function () {
         cpu.reset();
@@ -33,12 +33,6 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
         try {
             // Execute
             var res = cpu.step();
-
-            // Mark in code
-            if (cpu.ip in $scope.mapping) {
-                $scope.selectedLine = $scope.mapping[cpu.ip];
-            }
-
             return res;
         } catch (e) {
             $scope.error = e;
@@ -92,15 +86,13 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
             $scope.reset();
 
             var assembly = assembler.go($scope.code);
-            $scope.mapping = assembly.mapping;
-            var binary = assembly.code;
-            $scope.labels = assembly.labels;
+			memory.instrs = assembly;
 
-            if (binary.length > memory.data.length)
+            if (assembly.length > memory.data.length)
                 throw "Binary code does not fit into the memory. Max " + memory.data.length + " bytes are allowed";
 
-            for (var i = 0, l = binary.length; i < l; i++) {
-                memory.data[i] = binary[i];
+            for (var i = 0, l = assembly.length; i < l; i++) {
+                memory.data[i] = assembly[i].code;
             }
         } catch (e) {
             if (e.line !== undefined) {
@@ -125,12 +117,8 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     };
 
     $scope.getMemoryCellCss = function (index) {
-        if (index >= $scope.outputStartIndex) {
-            return 'output-bg';
-        } else if ($scope.isInstruction(index)) {
+        if ($scope.isInstruction(index)) {
             return 'instr-bg';
-        } else if (index > cpu.sp && index <= cpu.maxSP) {
-            return 'stack-bg';
         } else {
             return '';
         }

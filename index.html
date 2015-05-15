@@ -21,7 +21,7 @@
                 <button type="button" class="btn btn-default navbar-btn" ng-click="reset()">Reset</button>
             </div>
             <div class="navbar-header navbar-right">
-                <a class="navbar-brand" style="color:#FFFFFF">Simple 8-bit Assembler Simulator</a>
+                <a class="navbar-brand" style="color:#FFFFFF">SIMPLE 16-bit Assembler Simulator</a>
             </div>
         </div>
     </nav>
@@ -51,21 +51,9 @@
             <div class="col-lg-5 col-md-6">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4 class="panel-title">Output</h4>
-                    </div>
-                    <div class="panel-body source-code">
-                        <div style="float:left;" class="output"
-                             ng-repeat="m in memory.data | startFrom: outputStartIndex track by $index">
-                            <span>{{ getChar(m) }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
                         <h4 class="panel-title">CPU & Memory</h4>
                     </div>
                     <div class="panel-body">
-                        <p class="text-muted">Registers / Flags</p>
                         <table class="table table-condensed table-striped">
                             <thead>
                                 <tr>
@@ -73,14 +61,16 @@
                                     <th style="text-align:center">S</th>
                                     <th style="text-align:center">Z</th>
                                     <th style="text-align:center">V</th>
+                                    <th style="text-align:center">OUTPUT</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr style="text-align:center;" class="source-code">
-                                    <td><div style="margin:auto;" class="marker marker-ip"><small>{{ cpu.ip | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" class="marker marker-ip"><small>{{ cpu.pc | number:displayHex }}</small></div></td>
                                     <td><small>{{ cpu.zero | flag }}</small></td>
                                     <td><small>{{ cpu.carry | flag }}</small></td>
-                                    <td><small>{{ cpu.fault | flag }}</small></td>
+                                    <td><small>{{ cpu.v | flag }}</small></td>
+                                    <td><small>{{ cpu.output | number:displayHex }}</small></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -103,10 +93,10 @@
                                     <td><div style="margin:auto;" ng-class="displayB && 'marker marker-b'"><small>{{ cpu.gpr[1] | number:displayHex }}</small></div></td>
                                     <td><div style="margin:auto;" ng-class="displayC && 'marker marker-c'"><small>{{ cpu.gpr[2] | number:displayHex }}</small></div></td>
                                     <td><div style="margin:auto;" ng-class="displayD && 'marker marker-d'"><small>{{ cpu.gpr[3] | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" ng-class="displayA && 'marker marker-a'"><small>{{ cpu.gpr[0] | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" ng-class="displayB && 'marker marker-b'"><small>{{ cpu.gpr[1] | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" ng-class="displayC && 'marker marker-c'"><small>{{ cpu.gpr[2] | number:displayHex }}</small></div></td>
-                                    <td><div style="margin:auto;" ng-class="displayD && 'marker marker-d'"><small>{{ cpu.gpr[3] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayA && 'marker marker-a'"><small>{{ cpu.gpr[4] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayB && 'marker marker-b'"><small>{{ cpu.gpr[5] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayC && 'marker marker-c'"><small>{{ cpu.gpr[6] | number:displayHex }}</small></div></td>
+                                    <td><div style="margin:auto;" ng-class="displayD && 'marker marker-d'"><small>{{ cpu.gpr[7] | number:displayHex }}</small></div></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -149,29 +139,6 @@
                                 <a ng-click="displayD = false" ng-show="displayD">Hide</a>
                             </small>
                         </p>
-                    </div>
-                </div>
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h4 class="panel-title">Labels</h4>
-                    </div>
-                    <div class="panel-body source-code">
-                        <table class="table table-condensed table-striped codelabels">
-                            <tr>
-                                <th>Name</th>
-                                <th>Address</th>
-                                <th>Value</th>
-                            </tr>
-                            <tr ng-repeat="(name, value) in labels" class="codelabel">
-                                <td class="codelabel-name">{{ name }}</td>
-                                <td class="codelabel-line"><a ng-click="jumpToLine(value)">{{ value | number:displayHex }}</a></td>
-                                <td class="codelabel-value">{{ memory.data[value] | number:displayHex }}
-                                    <span ng-if="memory.data[value] >= 32 && memory.data[value] <= 126">
-                                        ('{{ getChar(memory.data[value]) }}')
-                                    </span>
-                                </td>
-                            </tr>
-                        </table>
                     </div>
                 </div>
             </div>
