@@ -6,9 +6,9 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.displayHex = true;
     $scope.displayInstr = true;
     $scope.displayA = false;
-    $scope.displayB = false;
-    $scope.displayC = false;
-    $scope.displayD = false;
+    $scope.displayB = true;
+    $scope.displayC = true;
+    $scope.displayD = true;
     $scope.speeds = [{speed: 1, desc: "1 HZ"},
                      {speed: 4, desc: "4 HZ"},
                      {speed: 8, desc: "8 HZ"},
@@ -16,8 +16,23 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.speed = 4;
 	$scope.dataStartIndex = 128;
 
-	$scope.code = "LI R4,1\nMOV R1,R4\nHLT";
-    //$scope.code = "; Simple example\n; Writes Hello World to the output\n\n	JMP start\nhello: DB \"Hello World!\" ; Variable\n       DB 0	; String terminator\n\nstart:\n	MOV C, hello    ; Point to var \n	MOV D, 232	; Point to output\n	CALL print\n        HLT             ; Stop execution\n\nprint:			; print(C:*from, D:*to)\n	PUSH A\n	PUSH B\n	MOV B, 0\n.loop:\n	MOV A, [C]	; Get char from var\n	MOV [D], A	; Write to output\n	INC C\n	INC D  \n	CMP B, [C]	; Check if end\n	JNZ .loop	; jump if not\n\n	POP B\n	POP A\n	RET";
+	$scope.code = "LI R1, 128\n" +
+		"LI R3, 128\n" +
+		"ADDI R3, 7\n" +
+		"MOV R2, R1\n" +
+		"LD R4, 0(R2)\n" +
+		"LD R5, 1(R2)\n" +
+		"CMP R4, R5\n" +
+		"BLE 2\n" +
+		"ST R4, 1(R2)\n" +
+		"ST R5, 0(R2)\n" +
+		"ADDI R2, 1\n" +
+		"CMP R2, R3\n" +
+		"BLT -9\n" +
+		"ADDI R1, 1\n" +
+		"CMP R1, R3\n" +
+		"BLT -13\n" +
+		"HLT";
 
     $scope.reset = function () {
         cpu.reset();
@@ -64,7 +79,7 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     };
 
     $scope.checkPrgrmLoaded = function () {
-        for (var i = 0, l = memory.data.length; i < l; i++) {
+        for (var i = 0, l = memory.data.length/2; i < l; i++) {
             if (memory.data[i] !== 0) {
                 return true;
             }
