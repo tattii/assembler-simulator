@@ -235,12 +235,8 @@ var app = angular.module('ASMSimulator', []);
         step: function() {
             var self = this;
 
-            if (self.fault === true) {
-                throw "FAULT. Reset to continue.";
-            }
 
             try {
-
                 var jump = function(newPC) {
                     if (newPC < 0 || newPC >= memory.data.length) {
                         throw "PC outside memory";
@@ -249,37 +245,135 @@ var app = angular.module('ASMSimulator', []);
                     }
                 };
 
-                var division = function(divisor) {
-                    if (divisor === 0) {
-                        throw "Division by 0";
-                    }
-
-                    return Math.floor(self.gpr[0] / divisor);
-                };
-
                 if (self.pc < 0 || self.pc >= memory.data.length) {
                     throw "Program Counter is outside of memory";
                 }
                 
                 var instr = memory.loadInstr(self.pc);
+				self.count++;
+				var zero = 0, sign = 0, v = 0;
 				console.log(instr);
                 switch(instr.op) {
 					case 'HLT':
 						return false;
-					case 'LI':
-						self.gpr[instr.rb] = instr.d;
+
+					// ALU
+					case 'ADD':
+						self.gpr[instr.rd] = self.gpr[instr.rd] + self.gpr[instr.rs];
 						self.pc++;
 						break;
-
+					case 'SUB':
+						self.gpr[instr.rd] = self.gpr[instr.rd] - self.gpr[instr.rs];
+						self.pc++;
+						break;
+					case 'AND':
+						self.gpr[instr.rd] = self.gpr[instr.rd] & self.gpr[instr.rs];
+						self.pc++;
+						break;
+					case 'OR':
+						self.gpr[instr.rd] = self.gpr[instr.rd] | self.gpr[instr.rs];
+						self.pc++;
+						break;
+					case 'XOR':
+						self.gpr[instr.rd] = self.gpr[instr.rd] ^ self.gpr[instr.rs];
+						self.pc++;
+						break;
+					case 'CMP':
+						var res = self.gpr[instr.rd] - self.gpr[instr.rs];
+						if (res === 0) zero = 1;
+						if (res < 0)  sign = 1;
+						if (res > 32768 || res < -32769) v = 1;
+						self.pc++;
+						break;
 					case 'MOV':
 						self.gpr[instr.rd] = self.gpr[instr.rs];
 						self.pc++;
 						break;
-					
+
+					// I/O IN*
+					case 'OUT':
+						self.output = self.gpr[instr.rs];
+						self.pc++;
+						break;
+
+					// shift
+					case 'SLL':
+						self.gpr[instr.rd] = self.gpr[instr.rd] << instr.d;
+						self.pc++;
+						break;
+					case 'SLR':
+						self.gpr[instr.rd] = (self.gpr[instr.rd] << instr.d) + (self.gpr[instr.rd] >>> (16-instr.d));
+						self.pc++;
+						break;
+					case 'SRL':
+						self.gpr[instr.rd] = self.gpr[instr.rd] >>> instr.d;
+						self.pc++;
+						break;
+					case 'SRA':
+						self.gpr[instr.rd] = self.gpr[instr.rd] >> instr.d;
+						self.pc++;
+						break;
+
+					// load/store
+					case 'LD':
+						self.gpr[instr.ra] = memory.load(self.gpr[instr.rb] + instr.d);
+						self.pc++;
+						break;
+					case 'ST':
+						memory.store(self.gpr[instr.rb] + instr.d, self.gpr[instr.ra]);
+						self.pc++;
+						break;
+
+					case 'LI':
+						self.gpr[instr.rb] = instr.d;
+						self.pc++;
+						break;
+					case 'ADDI':
+						self.gpr[instr.rb] = self.gpr[instr.rb] + instr.d;
+						self.pc++;
+						break;
+
+					// branch
+					case 'B':
+						jump(self.pc + 1 + instr.d);
+						break;
+
+					case 'BE':
+						if (self.zero) {
+							jump(self.pc + 1 + instr.d);
+						}else{
+							self.pc++;
+						}
+						break;
+					case 'BLT':
+						if (self.sign ^ self.v) {
+							jump(self.pc + 1 + instr.d);
+						}else{
+							self.pc++;
+						}
+						break;
+					case 'BLE':
+						if (self.zero | (self.sign ^ self.v)) {
+							jump(self.pc + 1 + instr.d);
+						}else{
+							self.pc++;
+						}
+						break;
+					case 'BNE':
+						if (!self.zero) {
+							jump(self.pc + 1 + instr.d);
+						}else{
+							self.pc++;
+						}
+						break;
+
 					default:
-                        throw "Invalid op code: " + instr;
+                        throw "Invalid op code: " + instr.op;
                 }
 
+				self.zero = zero;
+				self.sign = sign;
+				self.v = v;
                 return true;
             } catch(e) {
                 self.fault = true;
@@ -289,13 +383,13 @@ var app = angular.module('ASMSimulator', []);
         reset: function() {
             var self = this;
 
-            self.gpr = [0, 0, 0, 0, 0, 0, 0, 0];
+            self.gpr = [0, 0, 0, 0, 0, 0, 0, 0]; // 8 reg
 			self.pc = 0;
-            self.zero = false;
-            self.carry = false;
-            self.fault = false;
-            self.v = false;
+			self.sign = 0;
+            self.zero = 0;
+            self.v    = 0;
 			self.output = 0;
+			self.count = 0;
         }
     };
 
@@ -340,9 +434,13 @@ var app = angular.module('ASMSimulator', []);
             var self = this;
 
             self.lastAccess = -1;
-            for (var i = 0, l = self.data.length; i < l; i++) {
+            if(self.instrs) self.instrs = null;
+            for (var i = 0, l = self.data.length/2; i < l; i++) {
                 self.data[i] = 0;
-                if(self.instrs) self.instrs = null;
+            }
+            for (var j = self.data.length/2, k = self.data.length; j < k; j++) {
+                self.data[j] = Math.floor( Math.random() * 65536 );
+
             }
         }
     };
@@ -446,6 +544,7 @@ var app = angular.module('ASMSimulator', []);
                      {speed: 8, desc: "8 HZ"},
                      {speed: 16, desc: "16 HZ"}];
     $scope.speed = 4;
+	$scope.dataStartIndex = 128;
 
 	$scope.code = "LI R4,1\nMOV R1,R4\nHLT";
     //$scope.code = "; Simple example\n; Writes Hello World to the output\n\n	JMP start\nhello: DB \"Hello World!\" ; Variable\n       DB 0	; String terminator\n\nstart:\n	MOV C, hello    ; Point to var \n	MOV D, 232	; Point to output\n	CALL print\n        HLT             ; Stop execution\n\nprint:			; print(C:*from, D:*to)\n	PUSH A\n	PUSH B\n	MOV B, 0\n.loop:\n	MOV A, [C]	; Get char from var\n	MOV [D], A	; Write to output\n	INC C\n	INC D  \n	CMP B, [C]	; Check if end\n	JNZ .loop	; jump if not\n\n	POP B\n	POP A\n	RET";
@@ -464,6 +563,7 @@ var app = angular.module('ASMSimulator', []);
 
         try {
             // Execute
+            $scope.selectedLine = cpu.pc;
             var res = cpu.step();
             return res;
         } catch (e) {
@@ -549,7 +649,9 @@ var app = angular.module('ASMSimulator', []);
     };
 
     $scope.getMemoryCellCss = function (index) {
-        if ($scope.isInstruction(index)) {
+		if (index >= $scope.dataStartIndex) {
+			return 'output-bg';
+		} else if ($scope.isInstruction(index)) {
             return 'instr-bg';
         } else {
             return '';
@@ -557,10 +659,8 @@ var app = angular.module('ASMSimulator', []);
     };
 
     $scope.getMemoryInnerCellCss = function (index) {
-        if (index === cpu.ip) {
+        if (index === cpu.pc) {
             return 'marker marker-ip';
-        } else if (index === cpu.sp) {
-            return 'marker marker-sp';
         } else if (index === cpu.gpr[0] && $scope.displayA) {
             return 'marker marker-a';
         } else if (index === cpu.gpr[1] && $scope.displayB) {

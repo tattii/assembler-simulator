@@ -36,9 +36,13 @@ app.service('memory', [function () {
             var self = this;
 
             self.lastAccess = -1;
-            for (var i = 0, l = self.data.length; i < l; i++) {
+            if(self.instrs) self.instrs = null;
+            for (var i = 0, l = self.data.length/2; i < l; i++) {
                 self.data[i] = 0;
-                if(self.instrs) self.instrs = null;
+            }
+            for (var j = self.data.length/2, k = self.data.length; j < k; j++) {
+                self.data[j] = Math.floor( Math.random() * 65536 );
+
             }
         }
     };

@@ -33,6 +33,7 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
 
         try {
             // Execute
+            $scope.selectedLine = cpu.pc;
             var res = cpu.step();
             return res;
         } catch (e) {
@@ -128,10 +129,8 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     };
 
     $scope.getMemoryInnerCellCss = function (index) {
-        if (index === cpu.ip) {
+        if (index === cpu.pc) {
             return 'marker marker-ip';
-        } else if (index === cpu.sp) {
-            return 'marker marker-sp';
         } else if (index === cpu.gpr[0] && $scope.displayA) {
             return 'marker marker-a';
         } else if (index === cpu.gpr[1] && $scope.displayB) {
