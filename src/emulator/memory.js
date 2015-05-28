@@ -41,7 +41,7 @@ app.service('memory', [function () {
                 self.data[i] = 0;
             }
             for (var j = self.data.length/2, k = self.data.length; j < k; j++) {
-                self.data[j] = Math.floor( Math.random() * 65536 );
+                self.data[j] = Math.floor( Math.random() * 1024 );
 
             }
         }

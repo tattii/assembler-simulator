@@ -74,6 +74,9 @@ app.service('assembler', [ function () {
 			var B3 = function(d) {
 				return zpad(d.toString(2), 3);
 			};
+			var B4 = function(d) {
+				return zpad(d.toString(2), 4);
+			};
 			var B8 = function(d) {
 				var bin;
 				if (d >= 0){
@@ -190,11 +193,10 @@ app.service('assembler', [ function () {
 								break;
 
 							case 'B':
-								p1 = parseRegister(match[2]);
-								p2 = parseNumber(match[3]);
+								p1 = parseNumber(match[2]);
 
-								opCode = b('10'+'100'+B3(p1)+B8(p2));
-								code.push({op:'LI', code: opCode, rb: p1, d: p2});
+								opCode = b('10'+'100'+'000'+B8(p1));
+								code.push({op:'B', code: opCode, d: p1});
 								break;
 
 
