@@ -75,6 +75,9 @@ var app = angular.module('ASMSimulator', []);
 			var B3 = function(d) {
 				return zpad(d.toString(2), 3);
 			};
+			var B4 = function(d) {
+				return zpad(d.toString(2), 4);
+			};
 			var B8 = function(d) {
 				var bin;
 				if (d >= 0){
@@ -191,11 +194,10 @@ var app = angular.module('ASMSimulator', []);
 								break;
 
 							case 'B':
-								p1 = parseRegister(match[2]);
-								p2 = parseNumber(match[3]);
+								p1 = parseNumber(match[2]);
 
-								opCode = b('10'+'100'+B3(p1)+B8(p2));
-								code.push({op:'LI', code: opCode, rb: p1, d: p2});
+								opCode = b('10'+'100'+'000'+B8(p1));
+								code.push({op:'B', code: opCode, d: p1});
 								break;
 
 
@@ -280,6 +282,7 @@ var app = angular.module('ASMSimulator', []);
 						break;
 					case 'CMP':
 						var res = self.gpr[instr.rd] - self.gpr[instr.rs];
+						console.log("CMP"+self.gpr[instr.rd]+","+self.gpr[instr.rs]+"="+res);
 						if (res === 0) zero = 1;
 						if (res < 0)  sign = 1;
 						if (res > 32768 || res < -32769) v = 1;
@@ -439,7 +442,7 @@ var app = angular.module('ASMSimulator', []);
                 self.data[i] = 0;
             }
             for (var j = self.data.length/2, k = self.data.length; j < k; j++) {
-                self.data[j] = Math.floor( Math.random() * 65536 );
+                self.data[j] = Math.floor( Math.random() * 1024 );
 
             }
         }

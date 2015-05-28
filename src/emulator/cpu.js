@@ -48,6 +48,7 @@ app.service('cpu', ['memory', function(memory) {
 						break;
 					case 'CMP':
 						var res = self.gpr[instr.rd] - self.gpr[instr.rs];
+						console.log("CMP"+self.gpr[instr.rd]+","+self.gpr[instr.rs]+"="+res);
 						if (res === 0) zero = 1;
 						if (res < 0)  sign = 1;
 						if (res > 32768 || res < -32769) v = 1;
